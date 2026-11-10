@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4x Trading - Investment App</title>
+    <style>
+        :root {
+            --primary-color: #ff4500;
+            --bg-color: #1a0505;
+            --card-bg: #2d0b0b;
+            --text-color: #ffffff;
+            --gray-text: #b0b0b0;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding-bottom: 70px;
+        }
+        header {
+            background: linear-gradient(135deg, #ff4500, #8b0000);
+            padding: 15px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .container {
+            padding: 15px;
+        }
+        .balance-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 69, 0, 0.3);
+        }
+        .balance-card h2 {
+            font-size: 28px;
+            color: #ffaa00;
+            margin-top: 5px;
+        }
+        .section-title {
+            font-size: 18px;
+            margin-bottom: 10px;
+            border-right: 4px solid var(--primary-color);
+            padding-right: 8px;
+        }
+        .plans-grid {
+            display: grid;
+            gap: 15px;
+        }
+        .plan-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid #441111;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .plan-info h3 {
+            font-size: 16px;
+            color: #ffcc00;
+        }
+        .plan-info p {
+            font-size: 14px;
+            color: var(--gray-text);
+            margin-top: 5px;
+        }
+        .invest-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .invest-btn:active {
+            transform: scale(0.95);
+        }
+        /* Bottom Navigation Bar */
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #150303;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            border-top: 1px solid #331111;
+        }
+        .nav-item {
+            text-align: center;
+            color: var(--gray-text);
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .nav-item.active {
+            color: var(--primary-color);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #441111;
+            background: #220808;
+            color: white;
+        }
+        .submit-btn {
+            width: 100%;
+            background: var(--primary-color);
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <header>4x Trading</header>
+
+    <div class="container">
+        <!-- Home Tab -->
+        <div id="home-tab" class="tab-content active">
+            <div class="balance-card">
+                <p>کل بیلنس (Total Balance)</p>
+                <h2 id="total-balance">PKR 0.00</h2>
+            </div>
+
+            <div class="section-title">انویسٹمنٹ پلانز (Investment Plans)</div>
+            <div class="plans-grid" id="plans-container">
+                <!-- Plans will be loaded via JavaScript -->
+            </div>
+        </div>
+
+        <!-- Deposit Tab -->
+        <div id="deposit-tab" class="tab-content">
+            <div class="section-title">رقم جمع کروائیں (Deposit)</div>
+            <div class="balance-card" style="text-align: right;">
+                <p style="margin-bottom: 10px;">اکاؤنٹ نمبر برائے فنڈز:</p>
+                <p><strong>EasyPaisa / JazzCash:</strong> 0310-6241994</p>
+                <p><strong>Account Name:</strong> Fozia Kiran</p>
+            </div>
+            <div class="form-group">
+                <label>ٹرانزیکشن ID (TID) درج کریں:</label>
+                <input type="text" id="tid-input" placeholder="مثلاً: TQOMZG4YTHKZ">
+            </div>
+            <div class="form-group">
+                <label>رقم (PKR):</label>
+                <input type="number" id="deposit-amount" placeholder="رقم لکھیں">
+            </div>
+            <button class="submit-btn" onclick="submitDeposit()">جمع کروانے کی درخواست بھیجیں</button>
+        </div>
+
+        <!-- Withdraw Tab -->
+        <div id="withdraw-tab" class="tab-content">
+            <div class="section-title">رقم نکلوانا (Withdraw)</div>
+            <div class="balance-card">
+                <p>قابلِ انخلا رقم</p>
+                <h2 id="withdraw-balance">PKR 0.00</h2>
+            </div>
+            <div class="form-group">
+                <label>اپنا اکاؤنٹ نمبر درج کریں:</label>
+                <input type="text" placeholder="EasyPaisa / JazzCash Number">
+            </div>
+            <div class="form-group">
+                <label>رقم لکھیں:</label>
+                <input type="number" placeholder="رقم">
+            </div>
+            <button class="submit-btn" onclick="alert('Withdrawal request submitted successfully!')">ودھرا کی درخواست دیں</button>
+        </div>
+
+        <!-- Account / Referral Tab -->
+        <div id="account-tab" class="tab-content">
+            <div class="section-title">ریفرل لنک (Referral Program)</div>
+            <div class="balance-card" style="text-align: right;">
+                <p>اپنا ریفرل لنک دوستوں کو شیئر کریں اور کمیشن حاصل کریں:</p>
+                <input type="text" value="https://4xtrading.app/ref=rehman_99" readonly style="width:100%; margin-top:10px; padding:8px; background:#110202; color:#ffcc00; border:1px solid #441111; border-radius:5px;">
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="switchTab('home', this)">ہوم</div>
+        <div class="nav-item" onclick="switchTab('deposit', this)">ڈپॉजिट</div>
+        <div class="nav-item" onclick="switchTab('withdraw', this)">ودھرا</div>
+        <div class="nav-item" onclick="switchTab('account', this)">اکاؤنٹ</div>
+    </div>
+
+    <script>
+        // Plans Data requested by user
+        const plans = [
+            { id: 1, name: "Plan 1", price: 345, profit: 45 },
+            { id: 2, name: "Plan 2", price: 800, profit: 110 },
+            { id: 3, name: "Plan 3", price: 1250, profit: 180 },
+            { id: 4, name: "Plan 4", price: 3000, profit: 450 },
+            { id: 5, name: "Plan 5", price: 4500, profit: 700 },
+            { id: 6, name: "Plan 6", price: 9000, profit: 1450 },
+            { id: 7, name: "Plan 7", price: 13500, profit: 2200 },
+            { id: 8, name: "Plan 8", price: 25000, profit: 4200 },
+            { id: 9, name: "Plan 9", price: 45000, profit: 8000 }
+        ];
+
+        let userBalance = 0;
+
+        function loadPlans() {
+            const container = document.getElementById('plans-container');
+            container.innerHTML = '';
+            plans.forEach(plan => {
+                container.innerHTML += `
+                    <div class="plan-card">
+                        <div class="plan-info">
+                            <h3>${plan.name} - PKR ${plan.price}</h3>
+                            <p>روزانہ پرافٹ: PKR ${plan.profit} (60 دن)</p>
+                        </div>
+                        <button class="invest-btn" onclick="buyPlan(${plan.price})">انویسٹ کریں</button>
+                    </div>
+                `;
+            });
+        }
+
+        function buyPlan(price) {
+            if(userBalance >= price) {
+                userBalance -= price;
+                updateUI();
+                alert('مبارک ہو! آپ کا پلان ایکٹیو ہو گیا ہے۔ 24 گھنٹے بعد پرافٹ شو ہوگا۔');
+            } else {
+                alert('آپ کے اکاؤنٹ میں بیلنس کم ہے۔ براہ کرم پہلے ڈپازٹ کریں۔');
+            }
+        }
+
+        function submitDeposit() {
+            let amount = parseFloat(document.getElementById('deposit-amount').value);
+            if(amount > 0) {
+                userBalance += amount;
+                updateUI();
+                alert('ڈپॉजिट کامیاب ہوگਿਆ! بیلنس اپ ڈیٹ کر دیا گیا ہے۔');
+                document.getElementById('deposit-amount').value = '';
+                document.getElementById('tid-input').value = '';
+            } else {
+                alert('درست رقم درج کریں۔');
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('total-balance').innerText = PKR ${userBalance.toFixed(2)};
+            document.getElementById('withdraw-balance').innerText = PKR ${userBalance.toFixed(2)};
+        }
+
+        function switchTab(tabName, element) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(tabName + '-tab').classList.add('active');
+            element.classList.add('active');
+        }
+
+        // Initialize
+        loadPlans();
+    </script>
+</body>
+</html>

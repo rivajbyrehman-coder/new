@@ -1,0 +1,6 @@
+{
+  "name": "4x Trading - Investment Platform",
+  "description": "Premier Pakistani Rupee (PKR) investment app with tiered daily return plans, EasyPaisa and JazzCash deposits, fast withdrawals, referral commissions, and bilingual Urdu/English interface.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

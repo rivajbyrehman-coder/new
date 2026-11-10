@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --primary: #ff4500;
+    --primary-hover: #ff5714;
+    --card-bg: #1e0707;
+    --surface-bg: #290b0b;
+    --accent-gold: #ffb703;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', 'Noto Sans Arabic', system-ui, -apple-system, sans-serif;
+  }
+
+  [dir="rtl"] {
+    font-family: 'Noto Sans Arabic', 'Plus Jakarta Sans', Tahoma, sans-serif;
+  }
+}
+
+.urdu-font {
+  font-family: 'Noto Sans Arabic', 'Noto Nastaliq Urdu', Tahoma, sans-serif;
+}
+
+.nastaliq {
+  font-family: 'Noto Nastaliq Urdu', 'Noto Sans Arabic', serif;
+  line-height: 1.8;
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #150404;
+}
+::-webkit-scrollbar-thumb {
+  background: #441111;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #ff4500;
+}
+
+@keyframes pulseSlow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.02); }
+}
+
+.pulse-slow {
+  animation: pulseSlow 3s infinite ease-in-out;
+}
