@@ -18,7 +18,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) 
   ] as const;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#140303]/95 backdrop-blur-md border-t border-[#3b0f0f] shadow-2xl safe-area-pb">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#0c1017]/95 backdrop-blur-md border-t border-slate-800 shadow-2xl safe-area-pb">
       <div className="max-w-2xl mx-auto flex items-center justify-around py-2 px-1">
         {navItems.map((item) => {
           const isActive = activeTab === item.id;
@@ -33,17 +33,17 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) 
               }}
               className={`flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all relative ${
                 isActive
-                  ? 'text-orange-500 font-bold scale-105'
-                  : 'text-stone-400 hover:text-stone-200'
+                  ? 'text-amber-400 font-bold scale-105'
+                  : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               <div className="relative">
                 <Icon className={`w-5 h-5 transition-transform ${isActive ? 'stroke-[2.5px]' : 'stroke-2'}`} />
                 {isActive && (
-                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-orange-500 shadow-sm shadow-orange-500"></span>
+                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-amber-400 shadow-sm shadow-amber-400"></span>
                 )}
               </div>
-              <span className="text-[11px] mt-1 tracking-tight urdu-font">
+              <span className="text-[11px] mt-1 tracking-tight font-medium">
                 {item.label}
               </span>
             </button>

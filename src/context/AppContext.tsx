@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import confetti from 'canvas-confetti';
-import { Language, PaymentMethod, Plan, ActiveInvestment, Transaction, ReferralMember, UserProfile } from '../types';
-import { OFFICIAL_PLANS } from '../data/plans';
+import { Language, PaymentMethod, Plan, ActiveInvestment, Transaction, ReferralMember, RealTeamMember, UserProfile } from '../types';
+import { OFFICIAL_PLANS, PAYMENT_METHODS, PaymentMethodDetail } from '../data/plans';
 import { translations } from '../translations';
 
 interface ToastMessage {
@@ -25,6 +25,7 @@ interface AppContextType {
   activeInvestments: ActiveInvestment[];
   transactions: Transaction[];
   referrals: ReferralMember[];
+  realTeam: RealTeamMember[];
   canClaimProfit: boolean;
   dailyPotentialIncome: number;
   totalProfitEarned: number;
@@ -38,6 +39,17 @@ interface AppContextType {
   approveDeposit: (txId: string) => boolean;
   rejectDeposit: (txId: string, reason?: string) => boolean;
   pendingDepositsCount: number;
+  approveWithdrawal: (txId: string) => boolean;
+  rejectWithdrawal: (txId: string, reason?: string) => boolean;
+  pendingWithdrawalsCount: number;
+  paymentMethods: Record<PaymentMethod, PaymentMethodDetail>;
+  updatePaymentMethod: (
+    methodId: PaymentMethod,
+    updates: { accountNumber: string; accountName: string; bankName?: string }
+  ) => boolean;
+  resetPaymentMethods: () => void;
+  registeredUsers: UserProfile[];
+  clearAllRegisteredUsers: () => void;
   resetData: () => void;
 }
 
@@ -52,6 +64,75 @@ const DEFAULT_REFERRALS: ReferralMember[] = [
   { id: 'ref-4', name: 'Kamran Khan', phone: '0333-891****', joinDate: '2025-05-13', tier: 3, commissionEarned: 90, status: 'active' },
 ];
 
+const DEFAULT_REGISTERED_USERS: UserProfile[] = [
+  {
+    id: '7X-10001',
+    name: 'Demo Mobile User',
+    contact: '03001234567',
+    phone: '03001234567',
+    password: '123456',
+    referralCode: 'ref_4567',
+    referredBy: 'rehman_99',
+    createdAt: '2025-05-01T10:00:00.000Z',
+    role: 'user',
+  },
+  {
+    id: '7X-10002',
+    name: 'Demo Email User',
+    contact: 'trader@7xtrading.app',
+    email: 'trader@7xtrading.app',
+    password: '123456',
+    referralCode: 'ref_trader',
+    referredBy: 'ref_4567',
+    createdAt: '2025-05-02T12:00:00.000Z',
+    role: 'user',
+  },
+  {
+    id: '7X-10821',
+    name: 'Zeeshan Ali',
+    contact: '03029841234',
+    phone: '03029841234',
+    password: 'password123',
+    referralCode: 'ref_zeeshan',
+    referredBy: 'ref_4567',
+    createdAt: '2025-05-10T10:00:00.000Z',
+    role: 'user',
+  },
+  {
+    id: '7X-10822',
+    name: 'Muhammad Usman',
+    contact: '03457125678',
+    phone: '03457125678',
+    password: 'password123',
+    referralCode: 'ref_usman',
+    referredBy: 'ref_zeeshan',
+    createdAt: '2025-05-11T11:30:00.000Z',
+    role: 'user',
+  },
+  {
+    id: '7X-10823',
+    name: 'Hamza Tariq',
+    contact: '03125539012',
+    phone: '03125539012',
+    password: 'password123',
+    referralCode: 'ref_hamza',
+    referredBy: 'ref_zeeshan',
+    createdAt: '2025-05-12T14:15:00.000Z',
+    role: 'user',
+  },
+  {
+    id: '7X-10824',
+    name: 'Kamran Khan',
+    contact: '03338913456',
+    phone: '03338913456',
+    password: 'password123',
+    referralCode: 'ref_kamran',
+    referredBy: 'ref_usman',
+    createdAt: '2025-05-13T16:45:00.000Z',
+    role: 'user',
+  },
+];
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [lang, setLangState] = useState<Language>(() => {
     const saved = localStorage.getItem('7x_lang') || localStorage.getItem('4x_lang');
@@ -61,7 +142,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [user, setUser] = useState<UserProfile | null>(() => {
     try {
       const savedUser = localStorage.getItem('7x_auth_user_profile');
-      return savedUser ? JSON.parse(savedUser) : null;
+      if (savedUser) {
+        const parsed: UserProfile = JSON.parse(savedUser);
+        const contact = (parsed.contact || parsed.phone || '').replace(/[-\s+]/g, '');
+        const isValidAdmin = contact === '03492928370' || contact === '923492928370';
+        if (parsed.role === 'admin' && !isValidAdmin) {
+          parsed.role = 'user';
+        }
+        return parsed;
+      }
+      return null;
     } catch {
       return null;
     }
@@ -92,6 +182,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [referrals, setReferrals] = useState<ReferralMember[]>(DEFAULT_REFERRALS);
   const [lastClaimDate, setLastClaimDate] = useState<string>('');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  const PAYMENT_STORAGE_KEY = '7x_deposit_payment_methods_v2';
+  const [paymentMethods, setPaymentMethods] = useState<Record<PaymentMethod, PaymentMethodDetail>>(() => {
+    try {
+      const saved = localStorage.getItem(PAYMENT_STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+      return PAYMENT_METHODS;
+    } catch {
+      return PAYMENT_METHODS;
+    }
+  });
+
+  const USERS_STORAGE_KEY = '7x_registered_users_list_v3';
+  const [registeredUsers, setRegisteredUsers] = useState<UserProfile[]>(() => {
+    try {
+      const saved = localStorage.getItem(USERS_STORAGE_KEY);
+      if (saved !== null) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+      return DEFAULT_REGISTERED_USERS;
+    } catch {
+      return DEFAULT_REGISTERED_USERS;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(registeredUsers));
+    } catch {
+      // storage error
+    }
+  }, [registeredUsers]);
 
   // Initialize from localStorage (Zero demo balance policy)
   useEffect(() => {
@@ -185,6 +310,75 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const dailyPotentialIncome = activeInvestments.reduce((sum, item) => sum + item.dailyProfit, 0);
   const totalProfitEarned = activeInvestments.reduce((sum, item) => sum + item.totalEarned, 0);
+
+  // Real Team & Sathiyan Calculation for the currently logged-in customer
+  const realTeam: RealTeamMember[] = useMemo(() => {
+    if (!user) return [];
+
+    const userCode = (user.referralCode || '').toLowerCase().trim();
+    const userContact = (user.contact || user.phone || '').toLowerCase().replace(/[-\s+]/g, '').trim();
+
+    // Level 1 (Direct Sathiyan): Registered with customer's referral code or mobile/email
+    const level1Users = registeredUsers.filter((u) => {
+      if (u.id === user.id) return false;
+      const ref = (u.referredBy || '').toLowerCase().trim();
+      const refClean = ref.replace(/[-\s+]/g, '');
+      return (userCode && ref === userCode) || (userContact && (ref === userContact || refClean === userContact));
+    });
+
+    const level1Codes = new Set(level1Users.map((u) => (u.referralCode || '').toLowerCase().trim()).filter(Boolean));
+    const level1Contacts = new Set(level1Users.map((u) => (u.contact || u.phone || '').toLowerCase().replace(/[-\s+]/g, '').trim()).filter(Boolean));
+
+    // Level 2 (Tier 2): Registered under Level 1 members
+    const level2Users = registeredUsers.filter((u) => {
+      if (u.id === user.id || level1Users.some((l1) => l1.id === u.id)) return false;
+      const ref = (u.referredBy || '').toLowerCase().trim();
+      const refClean = ref.replace(/[-\s+]/g, '');
+      return level1Codes.has(ref) || level1Contacts.has(refClean);
+    });
+
+    const level2Codes = new Set(level2Users.map((u) => (u.referralCode || '').toLowerCase().trim()).filter(Boolean));
+    const level2Contacts = new Set(level2Users.map((u) => (u.contact || u.phone || '').toLowerCase().replace(/[-\s+]/g, '').trim()).filter(Boolean));
+
+    // Level 3 (Tier 3): Registered under Level 2 members
+    const level3Users = registeredUsers.filter((u) => {
+      if (u.id === user.id || level1Users.some((l1) => l1.id === u.id) || level2Users.some((l2) => l2.id === u.id)) return false;
+      const ref = (u.referredBy || '').toLowerCase().trim();
+      const refClean = ref.replace(/[-\s+]/g, '');
+      return level2Codes.has(ref) || level2Contacts.has(refClean);
+    });
+
+    const mapMember = (u: UserProfile, tier: 1 | 2 | 3): RealTeamMember => {
+      const uplineUser = registeredUsers.find(
+        (p) =>
+          (p.referralCode && p.referralCode.toLowerCase() === u.referredBy?.toLowerCase().trim()) ||
+          (p.contact && p.contact.replace(/[-\s+]/g, '') === u.referredBy?.toLowerCase().replace(/[-\s+]/g, '').trim())
+      );
+      // Realistic tiered commission calculation: Tier 1: PKR 675, Tier 2: PKR 225, Tier 3: PKR 90
+      const commission = tier === 1 ? 675 : tier === 2 ? 225 : 90;
+
+      return {
+        id: u.id,
+        name: u.name,
+        contact: u.contact || u.phone || u.email || 'N/A',
+        phone: u.phone,
+        email: u.email,
+        joinDate: u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Active',
+        tier,
+        uplineCode: u.referredBy || '',
+        uplineName: uplineUser?.name,
+        referralCode: u.referralCode,
+        status: 'active',
+        commissionEarned: commission,
+      };
+    };
+
+    return [
+      ...level1Users.map((u) => mapMember(u, 1)),
+      ...level2Users.map((u) => mapMember(u, 2)),
+      ...level3Users.map((u) => mapMember(u, 3)),
+    ];
+  }, [user, registeredUsers]);
 
   const buyPlan = (plan: Plan): boolean => {
     if (balance < plan.price) {
@@ -295,6 +489,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const pendingDepositsCount = transactions.filter((t) => t.type === 'deposit' && t.status === 'pending').length;
+  const pendingWithdrawalsCount = transactions.filter((t) => t.type === 'withdraw' && t.status === 'pending').length;
 
   const withdraw = (amount: number, method: PaymentMethod, accountNumber: string, accountName: string): boolean => {
     if (!amount || amount < 150) {
@@ -325,14 +520,67 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       accountNumber: accountNumber.trim(),
       accountName: accountName.trim(),
       date: new Date().toISOString(),
-      status: 'completed',
-      note: `${method.toUpperCase()}: ${accountNumber.trim()} (${accountName.trim()})`,
+      status: 'pending', // Awaiting Admin Approval
+      note: `${method.toUpperCase()}: ${accountNumber.trim()} (${accountName.trim()}) • Admin Review`,
     };
 
+    // Amount is held/deducted from user balance immediately
     setBalance((prev) => prev - amount);
     setTransactions((prev) => [newTx, ...prev]);
 
-    showToast(translations[lang].withdrawSuccessMsg, 'success');
+    showToast(
+      lang === 'ur'
+        ? 'Withdrawal request admin ko bhej di gayi hai! Approval ke baad raqam foran bhej di jaye gi (Status: Pending).'
+        : 'Withdrawal request submitted! Funds will be transferred after admin approval (Status: Pending).',
+      'info'
+    );
+    return true;
+  };
+
+  const approveWithdrawal = (txId: string): boolean => {
+    const tx = transactions.find((t) => t.id === txId && t.type === 'withdraw');
+    if (!tx) return false;
+    if (tx.status === 'completed') {
+      showToast(lang === 'ur' ? 'Yeh withdrawal pehle hi approve ho chuki hai' : 'This withdrawal is already approved', 'info');
+      return false;
+    }
+
+    setTransactions((prev) =>
+      prev.map((t) =>
+        t.id === txId
+          ? { ...t, status: 'completed' as const, note: `Admin Approved & Paid • ${t.accountNumber || ''} (${t.accountName || ''})` }
+          : t
+      )
+    );
+    triggerCelebration();
+    showToast(
+      lang === 'ur'
+        ? `PKR ${tx.amount.toLocaleString()} ki withdrawal approve ho kar customer ke account mein bhej di gayi!`
+        : `Withdrawal of PKR ${tx.amount.toLocaleString()} approved and paid!`,
+      'success'
+    );
+    return true;
+  };
+
+  const rejectWithdrawal = (txId: string, reason?: string): boolean => {
+    const tx = transactions.find((t) => t.id === txId && t.type === 'withdraw');
+    if (!tx) return false;
+
+    setTransactions((prev) =>
+      prev.map((t) =>
+        t.id === txId
+          ? { ...t, status: 'rejected' as const, note: `Admin Rejected: ${reason || 'Details issue'} • Refunded` }
+          : t
+      )
+    );
+    // Refund the deducted amount back to user wallet balance
+    setBalance((prev) => prev + tx.amount);
+    showToast(
+      lang === 'ur'
+        ? `Withdrawal reject kar di gayi aur PKR ${tx.amount.toLocaleString()} wallet mein refund kar diye gaye.`
+        : `Withdrawal rejected. PKR ${tx.amount.toLocaleString()} refunded to user wallet.`,
+      'error'
+    );
     return true;
   };
 
@@ -403,41 +651,67 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return false;
     }
 
-    const cleanContact = isEmail ? raw.toLowerCase() : raw.replace(/[-\s]/g, '');
-    const isAdmin = cleanContact === '03450000000' || cleanContact === 'admin@7xtrading.app' || pass === 'admin786';
+    const cleanContact = isEmail ? raw.toLowerCase() : raw.replace(/[-\s+]/g, '');
+    const isAdminContact = cleanContact === '03492928370' || cleanContact === '923492928370';
+
+    if (isAdminContact) {
+      if (pass !== 'Rehman@124') {
+        showToast(
+          lang === 'ur'
+            ? 'Ghalat Admin Password! Sirf durust Admin password se login ho sakta hai.'
+            : 'Invalid Admin Password! Access denied.',
+          'error'
+        );
+        return false;
+      }
+    }
+
+    const isAdmin = isAdminContact && pass === 'Rehman@124';
 
     let profile: UserProfile;
-    try {
-      const usersListRaw = localStorage.getItem('7x_registered_users_list');
-      const usersList: UserProfile[] = usersListRaw ? JSON.parse(usersListRaw) : [];
-      const found = usersList.find((u) => u.contact?.toLowerCase() === cleanContact || (u.phone && u.phone.replace(/[-\s]/g, '') === cleanContact) || (u.email && u.email.toLowerCase() === cleanContact));
 
-      if (found) {
-        profile = found;
-      } else {
-        profile = {
-          id: `7X-${Math.floor(10000 + Math.random() * 90000)}`,
-          name: isAdmin ? 'Admin Manager' : 'Rehman Khan',
-          contact: cleanContact,
-          phone: isEmail ? undefined : cleanContact,
-          email: isEmail ? cleanContact : undefined,
-          referralCode: `ref_${cleanContact.slice(-4)}`,
-          createdAt: new Date().toISOString(),
-          role: isAdmin ? 'admin' : 'user',
-        };
-        usersList.push(profile);
-        localStorage.setItem('7x_registered_users_list', JSON.stringify(usersList));
-      }
-    } catch {
+    if (isAdmin) {
       profile = {
-        id: `7X-${Math.floor(10000 + Math.random() * 90000)}`,
-        name: 'Trader Account',
-        contact: cleanContact,
-        phone: isEmail ? undefined : cleanContact,
-        email: isEmail ? cleanContact : undefined,
-        referralCode: 'rehman_99',
-        createdAt: new Date().toISOString(),
-        role: isAdmin ? 'admin' : 'user',
+        id: '7X-ADMIN-01',
+        name: 'Admin (Rehman)',
+        contact: '03492928370',
+        phone: '03492928370',
+        referralCode: 'admin_rehman',
+        createdAt: '2025-01-01T00:00:00.000Z',
+        role: 'admin',
+      };
+    } else {
+      // STRICT RULE: Jis ka number register na ho wo login na kar saky pehly register kary!
+      const found = registeredUsers.find(
+        (u) =>
+          u.contact?.toLowerCase() === cleanContact ||
+          (u.phone && u.phone.replace(/[-\s+]/g, '') === cleanContact) ||
+          (u.email && u.email.toLowerCase() === cleanContact)
+      );
+
+      if (!found) {
+        showToast(
+          lang === 'ur'
+            ? 'Yeh mobile number / email register nahi hai! Barah-e-karam pehle "Naya Account (Register)" banayein.'
+            : 'This account is not registered. Please register a new account first.',
+          'error'
+        );
+        return false;
+      }
+
+      if (!found.password || found.password !== pass) {
+        showToast(
+          lang === 'ur'
+            ? 'Ghalat password darj kiya gaya hai! Sirf durust registered password se login ho sakta hai.'
+            : 'Incorrect password! Please enter your registered password.',
+          'error'
+        );
+        return false;
+      }
+
+      profile = {
+        ...found,
+        role: 'user',
       };
     }
 
@@ -448,7 +722,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setOnlineMembers(getRandomOnlineCount());
 
     showToast(
-      lang === 'ur' ? `Khush Amdeed, ${profile.name}! Login kamyab raha.` : `Welcome back, ${profile.name}! Login successful.`,
+      lang === 'ur'
+        ? isAdmin
+          ? 'Khush Amdeed Admin! Admin Portal active ho gaya hai.'
+          : `Khush Amdeed, ${profile.name}! Login kamyab raha.`
+        : isAdmin
+        ? 'Welcome Admin! Admin Portal activated.'
+        : `Welcome back, ${profile.name}! Login successful.`,
       'success'
     );
     return true;
@@ -470,7 +750,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return false;
       }
     } else {
-      const cleanPhone = raw.replace(/[-\s]/g, '');
+      const cleanPhone = raw.replace(/[-\s+]/g, '');
       if (cleanPhone.length < 10) {
         showToast(lang === 'ur' ? 'Durust mobile number darj karein (11 digits)' : 'Please enter valid 11-digit mobile number', 'error');
         return false;
@@ -482,7 +762,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return false;
     }
 
-    const cleanContact = isEmail ? raw.toLowerCase() : raw.replace(/[-\s]/g, '');
+    const cleanContact = isEmail ? raw.toLowerCase() : raw.replace(/[-\s+]/g, '');
+    const isAdminContact = cleanContact === '03492928370' || cleanContact === '923492928370';
+
+    if (isAdminContact) {
+      showToast(
+        lang === 'ur'
+          ? 'Yeh number Admin ke liye makhsoos hai. Barah-e-karam apna number darj karein ya direct Login karein.'
+          : 'This number is reserved for Admin. Please log in directly.',
+        'error'
+      );
+      return false;
+    }
+
+    // Check if already registered
+    const alreadyExists = registeredUsers.some(
+      (u) =>
+        u.contact?.toLowerCase() === cleanContact ||
+        (u.phone && u.phone.replace(/[-\s+]/g, '') === cleanContact) ||
+        (u.email && u.email.toLowerCase() === cleanContact)
+    );
+
+    if (alreadyExists) {
+      showToast(
+        lang === 'ur'
+          ? 'Yeh number / email pehle se registered hai! Barah-e-karam Login karein.'
+          : 'This account is already registered! Please log in.',
+        'error'
+      );
+      return false;
+    }
 
     const newProfile: UserProfile = {
       id: `7X-${Math.floor(10000 + Math.random() * 90000)}`,
@@ -490,21 +799,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       contact: cleanContact,
       phone: isEmail ? undefined : cleanContact,
       email: isEmail ? cleanContact : undefined,
-      referralCode: `ref_${Math.random().toString(36).substring(2, 7)}`,
+      password: pass,
+      referralCode: `ref_${cleanContact.slice(-4)}`,
       referredBy: refCode?.trim() || 'rehman_99',
       createdAt: new Date().toISOString(),
-      role: 'user',
+      role: 'user', // Customer role ONLY
     };
 
-    try {
-      const usersListRaw = localStorage.getItem('7x_registered_users_list');
-      const usersList: UserProfile[] = usersListRaw ? JSON.parse(usersListRaw) : [];
-      usersList.push(newProfile);
-      localStorage.setItem('7x_registered_users_list', JSON.stringify(usersList));
-    } catch {
-      // ignore
-    }
-
+    setRegisteredUsers((prev) => [newProfile, ...prev]);
     setUser(newProfile);
     localStorage.setItem('7x_auth_user_profile', JSON.stringify(newProfile));
 
@@ -513,7 +815,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     triggerCelebration();
     showToast(
-      lang === 'ur' ? `Mubarak ho ${cleanName}! Aap ka account ban gaya.` : `Registration successful! Welcome to 7x Trading.`,
+      lang === 'ur' ? `Mubarak ho ${cleanName}! Aap ka account register ho gaya.` : `Registration successful! Welcome to 7x Trading.`,
       'success'
     );
     return true;
@@ -523,6 +825,84 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUser(null);
     localStorage.removeItem('7x_auth_user_profile');
     showToast(lang === 'ur' ? 'Aap ka account logout ho gaya hai' : 'Logged out successfully', 'info');
+  };
+
+  const updatePaymentMethod = (
+    methodId: PaymentMethod,
+    updates: { accountNumber: string; accountName: string; bankName?: string }
+  ): boolean => {
+    if (!updates.accountNumber || updates.accountNumber.trim().length < 8) {
+      showToast(lang === 'ur' ? 'Durust account number darj karein' : 'Please enter a valid account number', 'error');
+      return false;
+    }
+    if (!updates.accountName || updates.accountName.trim().length < 3) {
+      showToast(lang === 'ur' ? 'Account title / naam darj karein' : 'Please enter valid account title', 'error');
+      return false;
+    }
+
+    const raw = updates.accountNumber.replace(/[-\s+]/g, '');
+
+    setPaymentMethods((prev) => {
+      const updated = {
+        ...prev,
+        [methodId]: {
+          ...prev[methodId],
+          accountNumber: updates.accountNumber.trim(),
+          accountNumberRaw: raw,
+          accountName: updates.accountName.trim(),
+          bankName: updates.bankName !== undefined ? updates.bankName.trim() : prev[methodId].bankName,
+        },
+      };
+      try {
+        localStorage.setItem(PAYMENT_STORAGE_KEY, JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+
+    triggerCelebration();
+    showToast(
+      lang === 'ur'
+        ? `${paymentMethods[methodId]?.name || methodId} deposit account details tabdeel ho gaye!`
+        : `${paymentMethods[methodId]?.name || methodId} deposit account updated!`,
+      'success'
+    );
+    return true;
+  };
+
+  const resetPaymentMethods = () => {
+    setPaymentMethods(PAYMENT_METHODS);
+    localStorage.removeItem(PAYMENT_STORAGE_KEY);
+    showToast(
+      lang === 'ur' ? 'Deposit account numbers default par reset kar diye gaye' : 'Deposit accounts reset to default',
+      'info'
+    );
+  };
+
+  const clearAllRegisteredUsers = () => {
+    setRegisteredUsers([]);
+    try {
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify([]));
+      localStorage.removeItem('7x_registered_users_list');
+      // If customer is currently logged in, clear customer auth session
+      const savedUser = localStorage.getItem('7x_auth_user_profile');
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.role !== 'admin') {
+          setUser(null);
+          localStorage.removeItem('7x_auth_user_profile');
+        }
+      }
+    } catch {
+      // storage error
+    }
+    showToast(
+      lang === 'ur'
+        ? 'Tamam registered users ka data kamyabi se clear ho gaya! Ab koi customer login nahi kar sakta, unhein pehle naya account register karna hoga. (Admin profile mehfooz hai).'
+        : 'All registered customer users cleared! Customers cannot log in without registering first. (Admin account is untouched).',
+      'success'
+    );
   };
 
   const resetData = () => {
@@ -552,6 +932,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         activeInvestments,
         transactions,
         referrals,
+        realTeam,
         canClaimProfit,
         dailyPotentialIncome,
         totalProfitEarned,
@@ -565,6 +946,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         approveDeposit,
         rejectDeposit,
         pendingDepositsCount,
+        approveWithdrawal,
+        rejectWithdrawal,
+        pendingWithdrawalsCount,
+        paymentMethods,
+        updatePaymentMethod,
+        resetPaymentMethods,
+        registeredUsers,
+        clearAllRegisteredUsers,
         resetData,
       }}
     >

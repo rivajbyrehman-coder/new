@@ -10,7 +10,7 @@ import { BottomNav } from './components/BottomNav';
 import { PlanModal } from './components/PlanModal';
 import { CalculatorModal } from './components/CalculatorModal';
 import { SupportModal } from './components/SupportModal';
-import { AdminModal } from './components/AdminModal';
+import { AdminPortal } from './components/AdminPortal';
 import { AuthScreen } from './components/AuthScreen';
 import { ToastContainer } from './components/Toast';
 import { Plan } from './types';
@@ -20,12 +20,11 @@ import { MessageCircle, HelpCircle } from 'lucide-react';
 type TabType = 'home' | 'deposit' | 'withdraw' | 'account';
 
 const MainApp: React.FC = () => {
-  const { isAuthenticated } = useApp();
+  const { isAuthenticated, user } = useApp();
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
 
   const handleSelectPlan = (plan: Plan) => {
     setSelectedPlan(plan);
@@ -39,15 +38,27 @@ const MainApp: React.FC = () => {
   // If user is not logged in / registered, show the compulsory AuthScreen
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#120303]">
+      <div className="min-h-screen bg-[#0b0e14]">
         <ToastContainer />
         <AuthScreen />
       </div>
     );
   }
 
+  // ADMIN ACCOUNT: Strictly show Admin Portal interface only!
+  // Customer interface (trading, buy plans, deposit, withdraw, tickers, bottom nav) is completely hidden.
+  if (user?.role === 'admin') {
+    return (
+      <div className="min-h-screen bg-[#080c14]">
+        <ToastContainer />
+        <AdminPortal />
+      </div>
+    );
+  }
+
+  // CUSTOMER ACCOUNT: Customer interface only (no admin elements or controls)
   return (
-    <div className="min-h-screen bg-[#120303] text-stone-100 flex flex-col font-sans selection:bg-orange-600 selection:text-white pb-20">
+    <div className="min-h-screen bg-[#0b0e14] text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950 pb-20">
       {/* Toast Notifications */}
       <ToastContainer />
 
@@ -55,7 +66,7 @@ const MainApp: React.FC = () => {
       <Header
         onOpenCalculator={() => setIsCalculatorOpen(true)}
         onOpenSupport={() => setIsSupportOpen(true)}
-        onOpenAdmin={() => setIsAdminOpen(true)}
+        onOpenAdmin={() => {}}
       />
 
       {/* Live Market Rates Ticker */}
@@ -72,16 +83,18 @@ const MainApp: React.FC = () => {
         )}
 
         {activeTab === 'deposit' && (
-          <DepositTab onOpenAdmin={() => setIsAdminOpen(true)} />
+          <DepositTab />
         )}
 
-        {activeTab === 'withdraw' && <WithdrawTab />}
+        {activeTab === 'withdraw' && (
+          <WithdrawTab />
+        )}
 
         {activeTab === 'account' && (
           <AccountTab
             onOpenSupport={() => setIsSupportOpen(true)}
             onOpenCalculator={() => setIsCalculatorOpen(true)}
-            onOpenAdmin={() => setIsAdminOpen(true)}
+            onOpenAdmin={() => {}}
           />
         )}
       </main>
@@ -123,11 +136,6 @@ const MainApp: React.FC = () => {
       <SupportModal
         isOpen={isSupportOpen}
         onClose={() => setIsSupportOpen(false)}
-      />
-
-      <AdminModal
-        isOpen={isAdminOpen}
-        onClose={() => setIsAdminOpen(false)}
       />
     </div>
   );

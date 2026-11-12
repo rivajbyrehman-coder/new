@@ -11,7 +11,7 @@ export const OFFICIAL_PLANS: Plan[] = [
     totalReturn: 45 * 60, // 2,700 PKR
     roiPercentage: Math.round(((45 * 60) / 345) * 100),
     tag: 'Beginner',
-    tagUrdu: 'Starter (Ibtidai)',
+    tagUrdu: 'Starter Tier',
     popular: false,
   },
   {
@@ -24,7 +24,7 @@ export const OFFICIAL_PLANS: Plan[] = [
     totalReturn: 110 * 60, // 6,600 PKR
     roiPercentage: Math.round(((110 * 60) / 800) * 100),
     tag: 'Popular',
-    tagUrdu: 'Maqbool (Popular)',
+    tagUrdu: 'Popular Tier',
     popular: false,
   },
   {
@@ -37,7 +37,7 @@ export const OFFICIAL_PLANS: Plan[] = [
     totalReturn: 180 * 60, // 10,800 PKR
     roiPercentage: Math.round(((180 * 60) / 1250) * 100),
     tag: 'Hot',
-    tagUrdu: 'Hot Plan',
+    tagUrdu: 'Silver VIP',
     popular: true,
   },
   {
@@ -50,7 +50,7 @@ export const OFFICIAL_PLANS: Plan[] = [
     totalReturn: 450 * 60, // 27,000 PKR
     roiPercentage: Math.round(((450 * 60) / 3000) * 100),
     tag: 'Best Value',
-    tagUrdu: 'Behtareen Value',
+    tagUrdu: 'Gold VIP (Best Value)',
     popular: true,
   },
   {
@@ -63,7 +63,7 @@ export const OFFICIAL_PLANS: Plan[] = [
     totalReturn: 700 * 60, // 42,000 PKR
     roiPercentage: Math.round(((700 * 60) / 4500) * 100),
     tag: 'High Yield',
-    tagUrdu: 'Ziada Munafa',
+    tagUrdu: 'Platinum VIP',
     popular: false,
   },
   {
@@ -76,7 +76,7 @@ export const OFFICIAL_PLANS: Plan[] = [
     totalReturn: 1450 * 60, // 87,000 PKR
     roiPercentage: Math.round(((1450 * 60) / 9000) * 100),
     tag: 'VIP 1',
-    tagUrdu: 'VIP 1 Tier',
+    tagUrdu: 'Diamond VIP',
     popular: false,
   },
   {
@@ -89,7 +89,7 @@ export const OFFICIAL_PLANS: Plan[] = [
     totalReturn: 2200 * 60, // 132,000 PKR
     roiPercentage: Math.round(((2200 * 60) / 13500) * 100),
     tag: 'VIP 2',
-    tagUrdu: 'VIP 2 Tier',
+    tagUrdu: 'Master VIP',
     popular: false,
   },
   {
@@ -102,7 +102,7 @@ export const OFFICIAL_PLANS: Plan[] = [
     totalReturn: 4200 * 60, // 252,000 PKR
     roiPercentage: Math.round(((4200 * 60) / 25000) * 100),
     tag: 'Elite',
-    tagUrdu: 'Elite Club',
+    tagUrdu: 'Executive Elite',
     popular: false,
   },
   {
@@ -115,7 +115,7 @@ export const OFFICIAL_PLANS: Plan[] = [
     totalReturn: 8000 * 60, // 480,000 PKR
     roiPercentage: Math.round(((8000 * 60) / 45000) * 100),
     tag: 'Maximum',
-    tagUrdu: 'Maximum Yield',
+    tagUrdu: 'Ultra Boss (Max Yield)',
     popular: true,
   },
 ];

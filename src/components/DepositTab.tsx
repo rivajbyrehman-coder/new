@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { PAYMENT_DETAILS, PAYMENT_METHODS, OFFICIAL_PLANS } from '../data/plans';
+import { OFFICIAL_PLANS } from '../data/plans';
 import { PaymentMethod } from '../types';
 import {
   Copy,
@@ -21,7 +21,7 @@ interface DepositTabProps {
 }
 
 export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
-  const { lang, t, deposit, transactions, showToast, pendingDepositsCount } = useApp();
+  const { lang, t, deposit, transactions, showToast, pendingDepositsCount, user, paymentMethods } = useApp();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('easypaisa');
   const [tid, setTid] = useState('');
   const [amount, setAmount] = useState<string>('');
@@ -29,7 +29,7 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
   const [showTidHelp, setShowTidHelp] = useState(false);
 
   const isUrdu = lang === 'ur';
-  const currentAccount = PAYMENT_METHODS[selectedMethod] || PAYMENT_METHODS.easypaisa;
+  const currentAccount = paymentMethods[selectedMethod] || paymentMethods.easypaisa;
 
   const handleCopy = (text: string, type: 'number' | 'name') => {
     navigator.clipboard.writeText(text);
@@ -55,14 +55,15 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
       {/* Tab Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-1.5 h-5 bg-orange-600 rounded-full"></div>
+          <div className="w-1.5 h-5 bg-amber-400 rounded-full"></div>
           <div>
             <h2 className="text-base font-extrabold text-white">{t.depositTitle}</h2>
-            <p className="text-xs text-stone-400">{t.depositSubtitle}</p>
+            <p className="text-xs text-slate-400">{t.depositSubtitle}</p>
           </div>
         </div>
 
-        {onOpenAdmin && (
+        {/* Admin Approvals Button - VISIBLE ONLY TO ADMIN */}
+        {onOpenAdmin && user?.role === 'admin' && (
           <button
             onClick={onOpenAdmin}
             className="flex items-center gap-1.5 text-xs font-bold py-1.5 px-3 rounded-xl bg-purple-950/70 hover:bg-purple-900 border border-purple-500/40 text-purple-200 transition-all shadow-sm"
@@ -70,7 +71,7 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
             <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
             <span>Admin Approvals</span>
             {pendingDepositsCount > 0 && (
-              <span className="w-4 h-4 rounded-full bg-amber-500 text-stone-950 text-[10px] font-black flex items-center justify-center">
+              <span className="w-4 h-4 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black flex items-center justify-center">
                 {pendingDepositsCount}
               </span>
             )}
@@ -80,7 +81,7 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
 
       {/* Pending Deposit Alert Banner */}
       {pendingDepositsCount > 0 && (
-        <div className="rounded-2xl p-3.5 bg-gradient-to-r from-amber-950/60 to-[#2c1304] border border-amber-500/40 flex items-center justify-between gap-3 animate-in fade-in shadow-lg">
+        <div className="rounded-2xl p-3.5 bg-gradient-to-r from-amber-950/60 to-[#1e1708] border border-amber-500/40 flex items-center justify-between gap-3 shadow-lg">
           <div className="flex items-center gap-2.5">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping shrink-0"></span>
             <div>
@@ -89,17 +90,17 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
                   ? `${pendingDepositsCount} Deposit Request Admin Review Mein Hai`
                   : `${pendingDepositsCount} Deposit Request Pending Admin Review`}
               </p>
-              <p className="text-[11px] text-stone-300">
+              <p className="text-[11px] text-slate-300">
                 {isUrdu
-                  ? 'Admin tasdeeq / approval ke baad balance foran credit ho jayega.'
+                  ? 'Admin verification ke baad balance foran aap ke account mein add ho jayega.'
                   : 'Balance will be credited immediately once approved by admin.'}
               </p>
             </div>
           </div>
-          {onOpenAdmin && (
+          {onOpenAdmin && user?.role === 'admin' && (
             <button
               onClick={onOpenAdmin}
-              className="shrink-0 text-xs font-black py-1.5 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 shadow transition-all hover:scale-105 active:scale-95"
+              className="shrink-0 text-xs font-black py-1.5 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 shadow transition-all hover:scale-105 active:scale-95"
             >
               {isUrdu ? 'Approve Karein' : 'Approve'}
             </button>
@@ -108,41 +109,41 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
       )}
 
       {/* Official Payment Account Card */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#2f0c0c] via-[#220707] to-[#160404] p-5 border border-orange-500/40 shadow-xl shadow-orange-950/40">
-        <div className="flex items-center justify-between text-xs text-stone-300 pb-3 mb-3 border-b border-[#3b0f0f]">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#121824] via-[#0f141f] to-[#0a0d14] p-5 border border-slate-800 shadow-xl">
+        <div className="flex items-center justify-between text-xs text-slate-300 pb-3 mb-3 border-b border-slate-800">
           <span className="font-bold flex items-center gap-1.5 text-amber-400">
             <CreditCard className="w-4 h-4 text-amber-400" />
             {t.accountDetails}
           </span>
-          <span className="text-[11px] text-emerald-400 bg-emerald-950/70 border border-emerald-500/30 px-2 py-0.5 rounded-full font-medium">
-            0% {isUrdu ? 'Fee' : 'Fee'} • {isUrdu ? 'Instant (Fauri)' : 'Instant'}
+          <span className="text-[11px] text-emerald-400 bg-emerald-950/70 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-medium">
+            0% Fee • {isUrdu ? 'Instant (Fauri)' : 'Instant'}
           </span>
         </div>
 
         {/* Payment Methods Tabs */}
         <div className="grid grid-cols-3 gap-2 mb-4">
-          {PAYMENT_DETAILS.methods.map((method) => (
+          {Object.values(paymentMethods).map((method) => (
             <button
               key={method.id}
               type="button"
               onClick={() => setSelectedMethod(method.id as PaymentMethod)}
-              className={`p-2 rounded-xl border text-center transition-all ${
+              className={`p-2.5 rounded-xl border text-center transition-all ${
                 selectedMethod === method.id
-                  ? 'bg-gradient-to-r from-orange-600 to-amber-600 border-amber-400 text-white font-bold shadow-md shadow-orange-950/50 scale-[1.02]'
-                  : 'bg-[#180505] text-stone-400 border-[#380e0e] hover:border-orange-500/30'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 border-amber-400 text-slate-950 font-black shadow-md scale-[1.02]'
+                  : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:border-slate-700'
               }`}
             >
-              <div className="text-xs font-semibold">{method.name}</div>
+              <div className="text-xs font-bold">{method.name}</div>
               <div className="text-[10px] opacity-80">{isUrdu ? method.nameUrdu : method.badge}</div>
             </button>
           ))}
         </div>
 
         {/* Dynamic Account Details Box for Selected Method */}
-        <div className="bg-[#120303] rounded-xl p-3.5 border border-[#3b0f0f] space-y-3">
+        <div className="bg-[#090d14] rounded-2xl p-4 border border-slate-800 space-y-3">
           {/* Method Badge & Bank Name */}
-          <div className="flex items-center justify-between pb-2 border-b border-[#240606] text-xs">
-            <span className="font-bold text-amber-400 flex items-center gap-1">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-800/80 text-xs">
+            <span className="font-bold text-amber-400 flex items-center gap-1.5">
               <span>{currentAccount.name}</span>
               {currentAccount.bankName && (
                 <span className="text-[10px] bg-blue-950/80 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-full">
@@ -150,15 +151,15 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
                 </span>
               )}
             </span>
-            <span className="text-[11px] text-stone-400">
-              {isUrdu ? 'Official Account' : 'Verified Payout'}
+            <span className="text-[11px] text-slate-400">
+              {isUrdu ? 'Tasdeeq Shuda Khata' : 'Verified Payout'}
             </span>
           </div>
 
           {/* Account Number */}
           <div className="flex items-center justify-between gap-2">
             <div>
-              <span className="text-[11px] text-stone-400 block">{t.accountNumber}:</span>
+              <span className="text-[11px] text-slate-400 block">{t.accountNumber}:</span>
               <span className="text-lg font-black text-amber-300 font-mono tracking-wider">
                 {currentAccount.accountNumber}
               </span>
@@ -166,7 +167,7 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
             <button
               type="button"
               onClick={() => handleCopy(currentAccount.accountNumberRaw, 'number')}
-              className="flex items-center gap-1 text-xs font-bold py-1.5 px-3 rounded-lg bg-orange-600/30 hover:bg-orange-600/50 border border-orange-500/40 text-orange-200 transition-all active:scale-95"
+              className="flex items-center gap-1 text-xs font-bold py-1.5 px-3 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 transition-all active:scale-95"
             >
               {copiedType === 'number' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{copiedType === 'number' ? t.copied : t.copyNumber}</span>
@@ -174,9 +175,9 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
           </div>
 
           {/* Account Title */}
-          <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#290808]">
+          <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
             <div>
-              <span className="text-[11px] text-stone-400 block">{t.accountHolder}:</span>
+              <span className="text-[11px] text-slate-400 block">{t.accountHolder}:</span>
               <span className="text-sm font-bold text-white tracking-wide">
                 {currentAccount.accountName}
               </span>
@@ -184,7 +185,7 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
             <button
               type="button"
               onClick={() => handleCopy(currentAccount.accountName, 'name')}
-              className="flex items-center gap-1 text-xs font-semibold py-1 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-stone-300 border border-white/10 transition-all active:scale-95"
+              className="flex items-center gap-1 text-xs font-semibold py-1 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-all active:scale-95"
             >
               {copiedType === 'name' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{copiedType === 'name' ? t.copied : t.copyName}</span>
@@ -194,10 +195,10 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
       </div>
 
       {/* Deposit Form */}
-      <form onSubmit={handleSubmit} className="bg-[#200707] rounded-2xl p-4 border border-[#3e1010] shadow-lg space-y-4">
-        {/* Quick Amount Pills */}
+      <form onSubmit={handleSubmit} className="bg-[#121824] rounded-3xl p-5 border border-slate-800 shadow-xl space-y-4">
+        {/* Quick Amount Buttons */}
         <div>
-          <label className="block text-xs font-semibold text-stone-300 mb-2 urdu-font">
+          <label className="block text-xs font-semibold text-slate-300 mb-2">
             {t.quickAmounts}
           </label>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
@@ -206,10 +207,10 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
                 key={plan.id}
                 type="button"
                 onClick={() => setAmount(plan.price.toString())}
-                className={`py-1.5 px-2 rounded-lg border text-xs font-mono font-semibold transition-all ${
+                className={`py-2 px-2 rounded-xl border text-xs font-mono font-bold transition-all ${
                   amount === plan.price.toString()
-                    ? 'bg-amber-500 text-stone-950 border-amber-400 font-bold'
-                    : 'bg-[#160404] text-stone-300 border-[#380e0e] hover:border-orange-500/30'
+                    ? 'bg-amber-500 text-slate-950 border-amber-400 shadow'
+                    : 'bg-slate-900/60 text-slate-300 border-slate-800 hover:border-slate-700'
                 }`}
               >
                 ₨ {plan.price.toLocaleString()}
@@ -220,11 +221,11 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
 
         {/* Amount Input */}
         <div>
-          <label className="block text-xs font-semibold text-stone-300 mb-1.5 urdu-font">
+          <label className="block text-xs font-semibold text-slate-300 mb-1.5">
             {t.enterAmount}
           </label>
           <div className="relative">
-            <span className="absolute left-3 [dir=rtl]:left-auto [dir=rtl]:right-3 top-1/2 -translate-y-1/2 text-stone-400 font-bold text-xs">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">
               PKR
             </span>
             <input
@@ -234,7 +235,7 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder={t.amountPlaceholder}
-              className="w-full bg-[#120303] border border-[#3e1010] focus:border-orange-500 rounded-xl py-2.5 px-12 text-sm text-white font-mono placeholder:text-stone-600 focus:outline-none focus:ring-1 focus:ring-orange-500"
+              className="w-full bg-[#0a0d14] border border-slate-800 focus:border-amber-500 rounded-xl py-2.5 px-12 text-sm text-white font-mono placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-amber-500"
             />
           </div>
         </div>
@@ -242,7 +243,7 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
         {/* Transaction ID (TID) Input */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="block text-xs font-semibold text-stone-300 urdu-font">
+            <label className="block text-xs font-semibold text-slate-300">
               {t.enterTid}
             </label>
             <button
@@ -261,11 +262,11 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
             value={tid}
             onChange={(e) => setTid(e.target.value)}
             placeholder={t.tidPlaceholder}
-            className="w-full bg-[#120303] border border-[#3e1010] focus:border-orange-500 rounded-xl py-2.5 px-3 text-sm text-white font-mono placeholder:text-stone-600 focus:outline-none focus:ring-1 focus:ring-orange-500 uppercase"
+            className="w-full bg-[#0a0d14] border border-slate-800 focus:border-amber-500 rounded-xl py-2.5 px-3 text-sm text-white font-mono placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-amber-500 uppercase"
           />
 
           {showTidHelp && (
-            <div className="mt-2 p-3 rounded-xl bg-[#140303] border border-amber-500/30 text-[11px] text-stone-300 leading-relaxed animate-in fade-in">
+            <div className="mt-2 p-3.5 rounded-xl bg-[#090d14] border border-amber-500/30 text-[11px] text-slate-300 leading-relaxed animate-in fade-in">
               <p className="font-semibold text-amber-300 mb-1">
                 {isUrdu ? '📌 TID Maloom Karne Ka Tareeqa:' : '📌 Finding your Transaction ID (TID):'}
               </p>
@@ -281,7 +282,7 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
         {/* Submit Button */}
         <button
           type="submit"
-          className="w-full bg-gradient-to-r from-orange-600 via-[#ff4500] to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold py-3 px-4 rounded-xl shadow-lg shadow-orange-950/60 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] text-sm"
+          className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black py-3 px-4 rounded-xl shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] text-sm"
         >
           <Send className="w-4 h-4" />
           <span>{t.submitDeposit}</span>
@@ -289,13 +290,17 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
       </form>
 
       {/* Instructions Card */}
-      <div className="bg-[#170404] rounded-2xl p-4 border border-[#360e0e]">
-        <h4 className="text-xs font-bold text-stone-200 mb-3 flex items-center gap-1.5">
+      <div className="bg-[#121824] rounded-2xl p-4 border border-slate-800">
+        <h4 className="text-xs font-bold text-slate-200 mb-3 flex items-center gap-1.5">
           <AlertCircle className="w-4 h-4 text-amber-400" />
           {t.depositInstructionsTitle}
         </h4>
-        <div className="space-y-2 text-xs text-stone-400 leading-relaxed">
-          <p>{t.step1}</p>
+        <div className="space-y-2 text-xs text-slate-400 leading-relaxed">
+          <p>
+            {isUrdu
+              ? `1. EasyPaisa (${paymentMethods.easypaisa.accountNumber} ${paymentMethods.easypaisa.accountName}), JazzCash (${paymentMethods.jazzcash.accountNumber} ${paymentMethods.jazzcash.accountName}), ya ${paymentMethods.bank.name} (${paymentMethods.bank.accountNumber} ${paymentMethods.bank.accountName}) par raqam transfer karein.`
+              : `1. Transfer funds to EasyPaisa (${paymentMethods.easypaisa.accountNumber} ${paymentMethods.easypaisa.accountName}), JazzCash (${paymentMethods.jazzcash.accountNumber} ${paymentMethods.jazzcash.accountName}), or ${paymentMethods.bank.name} (${paymentMethods.bank.accountNumber} ${paymentMethods.bank.accountName}).`}
+          </p>
           <p>{t.step2}</p>
           <p>{t.step3}</p>
         </div>
@@ -304,7 +309,7 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
       {/* Recent Deposits History */}
       {depositTransactions.length > 0 && (
         <div className="pt-2">
-          <h3 className="text-xs font-bold text-stone-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+          <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
             <Clock className="w-3.5 h-3.5 text-amber-400" />
             {isUrdu ? 'Deposit History (Jama Shuda Raqam)' : 'Recent Deposits'}
           </h3>
@@ -312,12 +317,12 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
             {depositTransactions.slice(0, 6).map((tx) => (
               <div
                 key={tx.id}
-                className={`border rounded-xl p-3 flex items-center justify-between text-xs transition-all ${
+                className={`border rounded-2xl p-3 flex items-center justify-between text-xs transition-all ${
                   tx.status === 'pending'
-                    ? 'bg-gradient-to-r from-[#290d05] to-[#1c0606] border-amber-500/40 shadow-sm'
+                    ? 'bg-gradient-to-r from-amber-950/30 to-[#121824] border-amber-500/40 shadow-sm'
                     : tx.status === 'rejected'
-                    ? 'bg-[#180404] border-rose-500/30'
-                    : 'bg-[#1c0606] border-[#380e0e]'
+                    ? 'bg-[#121824] border-rose-500/30'
+                    : 'bg-[#121824] border-slate-800'
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -336,7 +341,7 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
                     <div className="font-mono font-bold text-white">
                       +PKR {tx.amount.toLocaleString()}
                     </div>
-                    <div className="text-[10px] text-stone-400 font-mono">
+                    <div className="text-[10px] text-slate-400 font-mono">
                       {tx.tid ? `TID: ${tx.tid}` : tx.note || 'Direct'}
                     </div>
                   </div>
@@ -344,15 +349,22 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
 
                 <div className="text-right">
                   {tx.status === 'pending' ? (
-                    <button
-                      type="button"
-                      onClick={onOpenAdmin}
-                      title="Click to view in Admin Portal"
-                      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-950/90 text-amber-300 border border-amber-500/50 hover:bg-amber-900 transition-colors"
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
-                      <span>Pending Approval</span>
-                    </button>
+                    user?.role === 'admin' && onOpenAdmin ? (
+                      <button
+                        type="button"
+                        onClick={onOpenAdmin}
+                        title="Click to view in Admin Portal"
+                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-950/90 text-amber-300 border border-amber-500/50 hover:bg-amber-900 transition-colors"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+                        <span>{isUrdu ? 'Zair-e-Tasdeeq' : 'Pending Approval'}</span>
+                      </button>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-950/70 text-amber-300 border border-amber-500/30">
+                        <Clock className="w-3 h-3 text-amber-400" />
+                        <span>{isUrdu ? 'Pending (Zair-e-Jaiza)' : 'Pending Review'}</span>
+                      </span>
+                    )
                   ) : tx.status === 'rejected' ? (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-950 text-rose-300 border border-rose-500/30">
                       <Ban className="w-3 h-3" />
@@ -364,7 +376,7 @@ export const DepositTab: React.FC<DepositTabProps> = ({ onOpenAdmin }) => {
                       <span>{t.statusCompleted}</span>
                     </span>
                   )}
-                  <div className="text-[10px] text-stone-500 mt-0.5 font-mono">
+                  <div className="text-[10px] text-slate-500 mt-0.5 font-mono">
                     {new Date(tx.date).toLocaleDateString()}
                   </div>
                 </div>

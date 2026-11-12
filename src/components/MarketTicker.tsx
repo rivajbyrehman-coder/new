@@ -37,18 +37,18 @@ export const MarketTicker: React.FC = () => {
   }, []);
 
   return (
-    <div className="bg-[#190404] border-b border-[#3b0d0d] overflow-x-auto py-1.5 px-3 scrollbar-none flex items-center gap-4 text-xs select-none">
-      <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-amber-500 shrink-0 bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-500/20">
+    <div className="bg-[#090c12] border-b border-slate-800/80 overflow-x-auto py-1.5 px-3 scrollbar-none flex items-center gap-4 text-xs select-none">
+      <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-amber-400 shrink-0 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
         <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
         Market
       </div>
       <div className="flex items-center gap-4 shrink-0">
         {items.map((item, idx) => (
           <div key={idx} className="flex items-center gap-1.5 shrink-0 font-mono">
-            <span className="text-stone-300 font-semibold">{item.symbol}</span>
-            <span className="text-stone-100">{item.price}</span>
+            <span className="text-slate-400 font-medium">{item.symbol}</span>
+            <span className="text-slate-200 font-semibold">{item.price}</span>
             <span
-              className={`flex items-center text-[11px] font-medium ${
+              className={`flex items-center text-[11px] font-bold ${
                 item.isUp ? 'text-emerald-400' : 'text-rose-400'
               }`}
             >

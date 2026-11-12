@@ -54,12 +54,28 @@ export interface ReferralMember {
   status: 'active' | 'inactive';
 }
 
+export interface RealTeamMember {
+  id: string;
+  name: string;
+  contact: string;
+  phone?: string;
+  email?: string;
+  joinDate: string;
+  tier: 1 | 2 | 3;
+  uplineCode: string;
+  uplineName?: string;
+  referralCode: string;
+  status: 'active' | 'new';
+  commissionEarned: number;
+}
+
 export interface UserProfile {
   id: string;
   name: string;
   phone?: string;
   email?: string;
   contact: string; // Mobile number or email address
+  password?: string;
   referralCode: string;
   referredBy?: string;
   createdAt: string;
